@@ -1,6 +1,6 @@
 /**
- *  Copyright (C) 2018 Ryszard Wiśniewski <brut.alll@gmail.com>
- *  Copyright (C) 2018 Connor Tumbleson <connor.tumbleson@gmail.com>
+ *  Copyright (C) 2019 Ryszard Wiśniewski <brut.alll@gmail.com>
+ *  Copyright (C) 2019 Connor Tumbleson <connor.tumbleson@gmail.com>
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package brut.androlib;
 import brut.androlib.meta.MetaInfo;
 import brut.androlib.meta.UsesFramework;
 import brut.androlib.res.AndrolibResources;
-import brut.androlib.res.data.ResConfigFlags;
 import brut.androlib.res.data.ResPackage;
 import brut.androlib.res.data.ResTable;
 import brut.androlib.res.data.ResUnknownFiles;
@@ -42,7 +41,6 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Ryszard Wiśniewski <brut.alll@gmail.com>
@@ -168,19 +166,12 @@ public class Androlib {
             String ext;
 
             for (String file : files) {
-                if (isAPKFileNames(file) &&
-                    unk.getCompressionLevel(file) == 0 &&
-                    unk.getSize(file) != 0) {
+                if (isAPKFileNames(file) && unk.getCompressionLevel(file) == 0 && unk.getSize(file) != 0) {
+                    ext = FilenameUtils.getExtension(file);
 
-                    if (StringUtils.countMatches(file, ".") > 1) {
+                    if (ext.isEmpty() || !NO_COMPRESS_PATTERN.matcher(ext).find()) {
                         ext = file;
-                    } else {
-                        ext = FilenameUtils.getExtension(file);
-                        if (ext.isEmpty()) {
-                            ext = file;
-                        }
                     }
-
                     if (!uncompressedFilesOrExts.contains(ext)) {
                         uncompressedFilesOrExts.add(ext);
                     }
@@ -239,6 +230,14 @@ public class Androlib {
             }
             if (in.containsDir("META-INF")) {
                 in.copyToDir(originalDir, "META-INF");
+
+                if (in.containsDir("META-INF/services")) {
+                    // If the original APK contains the folder META-INF/services folder
+                    // that is used for service locators (like coroutines on android),
+                    // copy it to the destination folder so it does not get dropped.
+                    LOGGER.info("Copying META-INF/services directory");
+                    in.copyToDir(outDir, "META-INF/services");
+                }
             }
         } catch (DirectoryException ex) {
             throw new AndrolibException(ex);
@@ -479,7 +478,7 @@ public class Androlib {
                     ninePatch = null;
                 }
                 mAndRes.aaptPackage(apkFile, new File(appDir,
-                        "AndroidManifest.xml"), new File(appDir, "res"),
+                                "AndroidManifest.xml"), new File(appDir, "res"),
                         ninePatch, null, parseUsesFramework(usesFramework));
 
                 Directory tmpDir = new ExtFile(apkFile).getDirectory();
@@ -541,7 +540,7 @@ public class Androlib {
                 }
 
                 mAndRes.aaptPackage(apkFile, new File(appDir,
-                        "AndroidManifest.xml"), null, ninePatch, null,
+                                "AndroidManifest.xml"), null, ninePatch, null,
                         parseUsesFramework(usesFramework));
 
                 Directory tmpDir = new ExtFile(apkFile).getDirectory();
@@ -560,6 +559,7 @@ public class Androlib {
         buildLibrary(appDir, "lib");
         buildLibrary(appDir, "libs");
         buildLibrary(appDir, "kotlin");
+        buildLibrary(appDir, "META-INF/services");
     }
 
     public void buildLibrary(File appDir, String folder) throws AndrolibException {
@@ -789,4 +789,7 @@ public class Androlib {
     private final static String[] APK_STANDARD_ALL_FILENAMES = new String[] {
             "classes.dex", "AndroidManifest.xml", "resources.arsc", "res", "r", "R",
             "lib", "libs", "assets", "META-INF", "kotlin" };
+    private final static Pattern NO_COMPRESS_PATTERN = Pattern.compile("(" +
+            "jpg|jpeg|png|gif|wav|mp2|mp3|ogg|aac|mpg|mpeg|mid|midi|smf|jet|rtttl|imy|xmf|mp4|" +
+            "m4a|m4v|3gp|3gpp|3g2|3gpp2|amr|awb|wma|wmv|webm|mkv)$");
 }

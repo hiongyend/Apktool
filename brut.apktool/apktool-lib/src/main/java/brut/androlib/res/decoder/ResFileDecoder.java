@@ -1,6 +1,6 @@
 /**
- *  Copyright (C) 2018 Ryszard Wiśniewski <brut.alll@gmail.com>
- *  Copyright (C) 2018 Connor Tumbleson <connor.tumbleson@gmail.com>
+ *  Copyright (C) 2019 Ryszard Wiśniewski <brut.alll@gmail.com>
+ *  Copyright (C) 2019 Connor Tumbleson <connor.tumbleson@gmail.com>
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class ResFileDecoder {
                     // check for raw 9patch images
                     for (String extension : RAW_9PATCH_IMAGE_EXTENSIONS) {
                         if (inFileName.toLowerCase().endsWith("." + extension)) {
-                            copyRaw(inDir, outDir, outFileName);
+                            copyRaw(inDir, outDir, inFileName, outFileName);
                             return;
                         }
                     }
@@ -107,7 +107,7 @@ public class ResFileDecoder {
                 // check for raw image
                 for (String extension : RAW_IMAGE_EXTENSIONS) {
                     if (inFileName.toLowerCase().endsWith("." + extension)) {
-                        copyRaw(inDir, outDir, outFileName);
+                        copyRaw(inDir, outDir, inFileName, outFileName);
                         return;
                     }
                 }
@@ -144,9 +144,10 @@ public class ResFileDecoder {
         }
     }
 
-    public void copyRaw(Directory inDir, Directory outDir, String filename) throws AndrolibException {
+    public void copyRaw(Directory inDir, Directory outDir, String inFilename,
+                        String outFilename) throws AndrolibException {
         try {
-            DirUtil.copyToDir(inDir, outDir, filename);
+            DirUtil.copyToDir(inDir, outDir, inFilename, outFilename);
         } catch (DirectoryException ex) {
             throw new AndrolibException(ex);
         }
@@ -168,6 +169,7 @@ public class ResFileDecoder {
 
     private final static String[] RAW_IMAGE_EXTENSIONS = new String[] {
         "m4a", // apple
+        "qmg", // samsung
     };
 
     private final static String[] RAW_9PATCH_IMAGE_EXTENSIONS = new String[] {

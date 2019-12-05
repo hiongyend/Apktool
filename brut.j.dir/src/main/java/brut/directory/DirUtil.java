@@ -1,6 +1,6 @@
 /**
- *  Copyright (C) 2018 Ryszard Wiśniewski <brut.alll@gmail.com>
- *  Copyright (C) 2018 Connor Tumbleson <connor.tumbleson@gmail.com>
+ *  Copyright (C) 2019 Ryszard Wiśniewski <brut.alll@gmail.com>
+ *  Copyright (C) 2019 Connor Tumbleson <connor.tumbleson@gmail.com>
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,17 +41,19 @@ public class DirUtil {
 
     public static void copyToDir(Directory in, Directory out, String fileName)
             throws DirectoryException {
+        copyToDir(in, out, fileName, fileName);
+    }
+
+    public static void copyToDir(Directory in, Directory out, String inFile, String outFile)
+            throws DirectoryException {
         try {
-            if (in.containsDir(fileName)) {
-                // TODO: remove before copying
-                in.getDir(fileName).copyToDir(out.createDir(fileName));
+            if (in.containsDir(inFile)) {
+                in.getDir(inFile).copyToDir(out.createDir(outFile));
             } else {
-                BrutIO.copyAndClose(in.getFileInput(fileName),
-                    out.getFileOutput(fileName));
+                BrutIO.copyAndClose(in.getFileInput(inFile), out.getFileOutput(outFile));
             }
         } catch (IOException ex) {
-            throw new DirectoryException(
-                "Error copying file: " + fileName, ex);
+            throw new DirectoryException("Error copying file: " + inFile, ex);
         }
     }
 
@@ -79,7 +81,8 @@ public class DirUtil {
                 if (fileName.equals("res") && !in.containsFile(fileName)) {
                     return;
                 }
-                File outFile = new File(out, fileName);
+                String cleanedFilename = BrutIO.sanitizeUnknownFile(out, fileName);
+                File outFile = new File(out, cleanedFilename);
                 outFile.getParentFile().mkdirs();
                 BrutIO.copyAndClose(in.getFileInput(fileName),
                     new FileOutputStream(outFile));
