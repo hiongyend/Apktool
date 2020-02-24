@@ -154,7 +154,8 @@ public class ApkDecoder {
                 // foreach unknown dex file in root, lets disassemble it
                 Set<String> files = mApkFile.getDirectory().getFiles(true);
                 for (String file : files) {
-                    if (file.endsWith(".dex")) {
+//                    LOGGER.info("Apktool apk file "+file);
+                    if (file.endsWith(".dex")&& !file.contains("/")) {
                         if (! file.equalsIgnoreCase("classes.dex")) {
                             switch(mDecodeSources) {
                                 case DECODE_SOURCES_NONE:
